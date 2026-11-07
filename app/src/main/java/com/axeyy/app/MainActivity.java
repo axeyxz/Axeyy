@@ -28,6 +28,28 @@ public class MainActivity extends Activity {
  setContentView(sc);}
  private void provision(){if(!dpm.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE)){info("Android tidak mengizinkan pembuatan Work Profile saat ini. Pastikan belum ada Work Profile lain.");return;}Intent i=new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);i.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,admin);try{startActivity(i);}catch(Exception e){info("Gagal membuka proses Work Profile: "+e.getMessage());}}
  private void apps(){Intent q=new Intent(Intent.ACTION_MAIN);q.addCategory(Intent.CATEGORY_LAUNCHER);java.util.List<android.content.pm.ResolveInfo> a=getPackageManager().queryIntentActivities(q,0);java.util.Collections.sort(a,(x,y)->String.valueOf(x.loadLabel(getPackageManager())).compareToIgnoreCase(String.valueOf(y.loadLabel(getPackageManager()))));String[] names=new String[a.size()];for(int n=0;n<a.size();n++)names[n]=String.valueOf(a.get(n).loadLabel(getPackageManager()));if(a.isEmpty()){info("Belum ada aplikasi launcher di profil ini.");return;}new android.app.AlertDialog.Builder(this).setTitle("Aplikasi di profil ini ("+a.size()+")").setItems(names,(d,w)->{Intent launch=getPackageManager().getLaunchIntentForPackage(a.get(w).activityInfo.packageName);if(launch!=null)startActivity(launch);}).setNegativeButton("TUTUP",null).show();}
- private void proxy(){if(!dpm.isProfileOwnerApp(getPackageName())){info("Buka AXEYY dari dalam Work Profile untuk mengatur proxy khusus ruang kerja.");return;}EditText h=new EditText(this),p=new EditText(this),u=new EditText(this),pw=new EditText(this);h.setHint("Server / IP");p.setHint("Port SOCKS5");p.setText("1080");u.setHint("Username opsional");pw.setHint("Password opsional");LinearLayout box=new LinearLayout(this);box.setOrientation(1);box.setPadding(dp(15),0,dp(15),0);box.addView(h);box.addView(p);box.addView(u);box.addView(pw);new android.app.AlertDialog.Builder(this).setTitle("SOCKS5 Proxy").setMessage("Pengaturan ini disimpan di profil kerja. Engine VPN SOCKS5 akan ditambahkan dan diuji pada tahap berikutnya.").setView(box).setPositiveButton("SIMPAN",(d,w)->{try{int port=Integer.parseInt(p.getText().toString().trim());String host=h.getText().toString().trim();if(host.isEmpty()||port<1||port>65535)throw new Exception();getSharedPreferences("axeyy_proxy",0).edit().putString("host",host).putString("port",String.valueOf(port)).putString("username",u.getText().toString()).apply();info("Konfigurasi tersimpan di Work Profile. Trafik belum dialihkan pada build fondasi ini.");}catch(Exception e){info("Alamat server atau port tidak valid.");}}).setNegativeButton("BATAL",null).show();}
+ private static final int VPN_REQ=7821;
+ private void proxy(){
+  if(!dpm.isProfileOwnerApp(getPackageName())){info("Buka AXEYY dari dalam Work Profile. VPN ini hanya akan melindungi profil tempat AXEYY berjalan.");return;}
+  android.content.SharedPreferences prefs=getSharedPreferences("axeyy_proxy",0);
+  EditText h=new EditText(this),p=new EditText(this),u=new EditText(this),pw=new EditText(this);
+  h.setHint("Server / IP");h.setText(prefs.getString("host",""));
+  p.setHint("Port SOCKS5");p.setText(prefs.getString("port","1080"));
+  u.setHint("Username (opsional)");u.setText(prefs.getString("username",""));
+  pw.setHint("Password (opsional)");pw.setInputType(129);
+  LinearLayout box=new LinearLayout(this);box.setOrientation(1);box.setPadding(dp(15),0,dp(15),0);box.addView(h);box.addView(p);box.addView(u);box.addView(pw);
+  new android.app.AlertDialog.Builder(this).setTitle("SOCKS5 Proxy").setMessage("VPN hanya berjalan pada user Android tempat AXEYY dipasang. Pasang AXEYY di Work Profile untuk membatasi proxy ke ruang kerja.").setView(box)
+   .setPositiveButton("SIMPAN & HUBUNGKAN",(d,w)->{
+    String host=h.getText().toString().trim(),port=p.getText().toString().trim();int n;
+    try{n=Integer.parseInt(port);}catch(Exception e){info("Port harus angka.");return;}
+    if(host.isEmpty()||n<1||n>65535){info("Alamat server atau port tidak valid.");return;}
+    prefs.edit().putString("host",host).putString("port",port).putString("username",u.getText().toString()).putString("password",pw.getText().toString()).apply();
+    Intent prep=android.net.VpnService.prepare(this);
+    if(prep!=null)startActivityForResult(prep,VPN_REQ);else startProxy();
+   }).setNeutralButton("PUTUSKAN",(d,w)->{Intent i=new Intent(this,ProxyVpnService.class);i.setAction(ProxyVpnService.STOP);startService(i);info("Permintaan memutuskan VPN dikirim.");})
+   .setNegativeButton("BATAL",null).show();
+ }
+ @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==VPN_REQ){if(result==RESULT_OK)startProxy();else info("Izin VPN ditolak; proxy tidak tersambung.");}}
+ private void startProxy(){try{Intent i=new Intent(this,ProxyVpnService.class);i.setAction(ProxyVpnService.START);if(android.os.Build.VERSION.SDK_INT>=26)startForegroundService(i);else startService(i);info("Permintaan tunnel dikirim. Uji IP dari aplikasi di Work Profile.");}catch(Exception e){info("Tidak dapat memulai VPN: "+e.getMessage());}}
  private void info(String s){new android.app.AlertDialog.Builder(this).setMessage(s).setPositiveButton("OK",null).show();}
 }
