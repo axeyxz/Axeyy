@@ -15,8 +15,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
-      - name: Install Android NDK
-        run: sdkmanager "ndk;27.2.12479018"
+        with:
+          packages: 'platform-tools platforms;android-35 ndk;27.2.12479018'
       - name: Build SOCKS5 native engine
         run: |
           git clone --recursive https://github.com/heiher/hev-socks5-tunnel native/hev-socks5-tunnel
