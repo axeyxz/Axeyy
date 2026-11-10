@@ -371,16 +371,16 @@ public class MainActivity extends Activity {
 
     private void copyEnterpriseChecklist() {
         String checklist =
-            "AXEY Work - Android Enterprise readiness\\n" +
-            "Current status: not connected to an enterprise or Managed Google Play.\\n\\n" +
-            "Required setup:\\n" +
-            "1. Create a Google Cloud project and enable the Android Management API.\\n" +
-            "2. Complete the Android Enterprise enterprise-binding flow for the organization.\\n" +
-            "3. Run an EMM backend that securely authenticates to Google APIs and creates policies and enrollment tokens.\\n" +
-            "4. Enroll the device through Android Device Policy using a backend-generated enrollment token.\\n" +
-            "5. Configure managed Google Play apps in the enterprise policy.\\n\\n" +
-            "Important: Android Management API supports Android Device Policy as its DPC. AXEY's current AxeyyAdminReceiver is a separate local DPC and cannot act as the Android Management API DPC. A separate supported enrollment flow is required.\\n" +
-            "Do not place service-account keys, passwords, or enrollment tokens in the APK.\\n" +
+            "AXEY Work - Android Enterprise readiness\n" +
+            "Current status: not connected to an enterprise or Managed Google Play.\n\n" +
+            "Required setup:\n" +
+            "1. Create a Google Cloud project and enable the Android Management API.\n" +
+            "2. Complete the Android Enterprise enterprise-binding flow for the organization.\n" +
+            "3. Run an EMM backend that securely authenticates to Google APIs and creates policies and enrollment tokens.\n" +
+            "4. Enroll the device through Android Device Policy using a backend-generated enrollment token.\n" +
+            "5. Configure managed Google Play apps in the enterprise policy.\n\n" +
+            "Important: Android Management API supports Android Device Policy as its DPC. AXEY's current AxeyyAdminReceiver is a separate local DPC and cannot act as the Android Management API DPC. A separate supported enrollment flow is required.\n" +
+            "Do not place service-account keys, passwords, or enrollment tokens in the APK.\n" +
             "This report contains no account credentials or tokens.";
 
         ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
