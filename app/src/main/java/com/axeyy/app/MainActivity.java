@@ -297,8 +297,20 @@ public class MainActivity extends Activity {
     }
 
     private void createWorkProfile() {
-        if (dpm == null || !dpm.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE)) {
-            showMessage("Android belum mengizinkan pembuatan Work Profile. Periksa apakah profil kerja lain sudah aktif atau perangkat membatasi fitur ini.");
+        if (dpm == null || !getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)) {
+            showMessage("Perangkat ini tidak melaporkan dukungan Work Profile Android. AXEY memerlukan fitur managed users dari sistem.");
+            return;
+        }
+        if (!dpm.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE)) {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("Work Profile belum bisa dibuat")
+                .setMessage("Android sedang menolak proses pembuatan profil. Pastikan tidak ada profil kerja lain, akun/perangkat tidak dikelola organisasi lain, dan fitur Work Profile didukung oleh sistem.")
+                .setNegativeButton("NANTI", null)
+                .setPositiveButton("PENGATURAN", (dialog, which) -> {
+                    try { startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS)); }
+                    catch (Exception e) { showMessage("Pengaturan Android tidak dapat dibuka."); }
+                })
+                .show();
             return;
         }
         Intent setup = new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
