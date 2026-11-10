@@ -11,6 +11,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Build;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
@@ -22,6 +24,7 @@ import java.util.Set;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -216,6 +219,21 @@ public class MainActivity extends Activity {
         refreshParams.topMargin = dp(10);
         card.addView(refresh, refreshParams);
 
+        EditText search = new EditText(this);
+        search.setSingleLine(true);
+        search.setTextSize(14);
+        search.setTextColor(textPrimary);
+        search.setHintTextColor(textSecondary);
+        search.setHint("Cari aplikasi kerja...");
+        search.setPadding(dp(13), 0, dp(13), 0);
+        search.setBackground(rounded(buttonSecondary, 12));
+        LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(-1, dp(46));
+        searchParams.topMargin = dp(10);
+        card.addView(search, searchParams);
+
+        List<View> appRows = new java.util.ArrayList<>();
+        List<String> appNames = new java.util.ArrayList<>();
+
         Intent launcher = new Intent(Intent.ACTION_MAIN);
         launcher.addCategory(Intent.CATEGORY_LAUNCHER);
         PackageManager pm = getPackageManager();
@@ -268,8 +286,21 @@ public class MainActivity extends Activity {
             open.setContentDescription("Buka aplikasi " + String.valueOf(info.loadLabel(pm)));
             row.addView(open, new LinearLayout.LayoutParams(dp(76), dp(42)));
             card.addView(row);
+            appRows.add(row);
+            appNames.add(String.valueOf(info.loadLabel(pm)).toLowerCase(java.util.Locale.ROOT));
             count++;
         }
+
+        search.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
+            @Override public void afterTextChanged(Editable value) {
+                String query = value.toString().trim().toLowerCase(java.util.Locale.ROOT);
+                for (int i = 0; i < appRows.size(); i++) {
+                    appRows.get(i).setVisibility(appNames.get(i).contains(query) ? View.VISIBLE : View.GONE);
+                }
+            }
+        });
 
         heading.setText("APLIKASI DI WORK PROFILE (" + count + ")");
 
