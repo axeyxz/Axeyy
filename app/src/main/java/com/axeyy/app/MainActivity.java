@@ -348,8 +348,30 @@ public class MainActivity extends Activity {
         statusParams.topMargin = dp(8);
         card.addView(status, statusParams);
 
+        boolean managedUsersSupported = getPackageManager()
+            .hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
+        boolean localProfileOwner = dpm != null && dpm.isProfileOwnerApp(getPackageName());
+
+        TextView deviceCapability = label(
+            "DUKUNGAN ANDROID: " + (managedUsersSupported
+                ? "FITUR WORK PROFILE TERDETEKSI"
+                : "FITUR WORK PROFILE TIDAK TERDETEKSI"),
+            12, textPrimary, true);
+        LinearLayout.LayoutParams capabilityParams = new LinearLayout.LayoutParams(-1, -2);
+        capabilityParams.topMargin = dp(10);
+        card.addView(deviceCapability, capabilityParams);
+
+        TextView ownerStatus = label(
+            "STATUS AXEY: " + (localProfileOwner
+                ? "PROFILE OWNER AKTIF"
+                : "BELUM MENJADI PROFILE OWNER"),
+            12, textSecondary, true);
+        LinearLayout.LayoutParams ownerParams = new LinearLayout.LayoutParams(-1, -2);
+        ownerParams.topMargin = dp(6);
+        card.addView(ownerStatus, ownerParams);
+
         TextView detail = label(
-            "Work Profile yang dibuat AXEY saat ini dikelola secara lokal dan belum mendaftarkan perangkat ke organisasi atau Managed Google Play. Akun Google pribadi yang sudah login di HP tidak otomatis menjadi akun kerja terkelola. Android Management API mendaftarkan profil melalui enrollment token dan Android Device Policy; AxeyyAdminReceiver saat ini tidak otomatis kompatibel dengan jalur tersebut.",
+            "Deteksi fitur managed users hanya menunjukkan dukungan sistem, bukan pendaftaran enterprise. Work Profile AXEY saat ini dikelola secara lokal dan belum terhubung ke organisasi atau Managed Google Play. Akun Google pribadi tidak otomatis menjadi akun kerja terkelola. Android Management API memerlukan enrollment token dan Android Device Policy; AxeyyAdminReceiver saat ini bukan DPC untuk jalur tersebut.",
             13, textSecondary, false);
         LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
         detailParams.topMargin = dp(7);
