@@ -211,6 +211,11 @@ public class MainActivity extends Activity {
         hintParams.topMargin = dp(5);
         card.addView(hint, hintParams);
 
+        Button refresh = actionButton("SEGARKAN DAFTAR", false, this::render);
+        LinearLayout.LayoutParams refreshParams = new LinearLayout.LayoutParams(-1, dp(42));
+        refreshParams.topMargin = dp(10);
+        card.addView(refresh, refreshParams);
+
         Intent launcher = new Intent(Intent.ACTION_MAIN);
         launcher.addCategory(Intent.CATEGORY_LAUNCHER);
         PackageManager pm = getPackageManager();
