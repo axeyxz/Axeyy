@@ -169,6 +169,22 @@ public class MainActivity extends Activity {
         );
 
         if (!active) {
+            boolean managedUsersSupported = getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
+            boolean provisioningAllowed = canProvisionManagedProfile();
+            String provisioningMessage;
+            if (provisioningAllowed) {
+                provisioningMessage = "Android saat ini mengizinkan proses pembuatan Work Profile. Lanjutkan melalui wizard resmi Android.";
+            } else if (dpm == null) {
+                provisioningMessage = "Layanan DevicePolicyManager tidak tersedia. AXEY tidak dapat memulai provisioning pada sesi ini.";
+            } else if (managedUsersSupported) {
+                provisioningMessage = "Perangkat mendukung managed users, tetapi Android saat ini menolak provisioning. Periksa apakah sudah ada Work Profile atau pembatasan administrator.";
+            } else {
+                provisioningMessage = "Perangkat tidak melaporkan fitur managed users. AXEY tidak dapat memaksa pembuatan Work Profile.";
+            }
+            addSection(page,
+                provisioningAllowed ? "STATUS SETUP: SIAP" : "STATUS SETUP: TERBATAS",
+                provisioningMessage);
             addButton(page, "BUAT WORK PROFILE", true, this::createWorkProfile);
         } else {
             addButton(page, "TAMBAH AKUN GOOGLE KERJA", false, this::addGoogleWorkAccount);
@@ -432,12 +448,18 @@ public class MainActivity extends Activity {
         render();
     }
 
+    private boolean canProvisionManagedProfile() {
+        return dpm != null
+            && getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)
+            && dpm.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
+    }
+
     private void createWorkProfile() {
         if (dpm == null || !getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)) {
             showMessage("Perangkat ini tidak melaporkan dukungan Work Profile Android. AXEY memerlukan fitur managed users dari sistem.");
             return;
         }
-        if (!dpm.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE)) {
+        if (!canProvisionManagedProfile()) {
             new android.app.AlertDialog.Builder(this)
                 .setTitle("Work Profile belum bisa dibuat")
                 .setMessage("Android sedang menolak proses pembuatan profil. Pastikan tidak ada profil kerja lain, akun/perangkat tidak dikelola organisasi lain, dan fitur Work Profile didukung oleh sistem.")
