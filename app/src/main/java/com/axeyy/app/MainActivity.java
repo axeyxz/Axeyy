@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.net.Uri;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -234,11 +235,24 @@ public class MainActivity extends Activity {
             nameParams.leftMargin = dp(12);
             row.addView(appName, nameParams);
 
-            Button open = actionButton("BUKA", false, () -> {
-                try { startActivity(pm.getLaunchIntentForPackage(packageName)); }
+            Button info = actionButton("INFO", false, () -> {
+                try {
+                    Intent details = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    details.setData(Uri.parse("package:" + packageName));
+                    startActivity(details);
+                } catch (Exception e) {
+                    showMessage("Info aplikasi tidak dapat dibuka dari profil ini.");
+                }
+            });
+            LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(dp(66), dp(42));
+            infoParams.rightMargin = dp(6);
+            row.addView(info, infoParams);
+
+            Button open = actionButton("BUKA", true, () -> {
+                try { startActivity(launch); }
                 catch (Exception e) { showMessage("Aplikasi tidak bisa dibuka dari profil ini."); }
             });
-            row.addView(open, new LinearLayout.LayoutParams(dp(82), dp(42)));
+            row.addView(open, new LinearLayout.LayoutParams(dp(76), dp(42)));
             card.addView(row);
             count++;
         }
