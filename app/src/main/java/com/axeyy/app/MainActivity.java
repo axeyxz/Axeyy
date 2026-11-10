@@ -403,6 +403,11 @@ public class MainActivity extends Activity {
         guideParams.topMargin = dp(10);
         card.addView(guide, guideParams);
 
+        Button diagnostics = actionButton("SALIN DIAGNOSTIK PERANGKAT", false, this::copyDeviceDiagnostics);
+        LinearLayout.LayoutParams diagnosticsParams = new LinearLayout.LayoutParams(-1, dp(46));
+        diagnosticsParams.topMargin = dp(10);
+        card.addView(diagnostics, diagnosticsParams);
+
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
         cardParams.topMargin = dp(14);
         parent.addView(card, cardParams);
@@ -429,6 +434,50 @@ public class MainActivity extends Activity {
         }
         clipboard.setPrimaryClip(ClipData.newPlainText("AXEY Enterprise checklist", checklist));
         Toast.makeText(this, "Checklist enterprise disalin.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void copyDeviceDiagnostics() {
+        boolean managedUsersSupported = getPackageManager()
+            .hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
+        boolean policyManagerAvailable = dpm != null;
+        boolean localProfileOwner = policyManagerAvailable
+            && dpm.isProfileOwnerApp(getPackageName());
+
+        String provisioningState;
+        if (!managedUsersSupported) {
+            provisioningState = "TIDAK DIDUKUNG OLEH SISTEM";
+        } else if (!policyManagerAvailable) {
+            provisioningState = "LAYANAN TIDAK TERSEDIA";
+        } else {
+            try {
+                provisioningState = dpm.isProvisioningAllowed(
+                    DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE)
+                    ? "DIIZINKAN" : "DIBLOKIR";
+            } catch (RuntimeException e) {
+                provisioningState = "TIDAK DAPAT DIPERIKSA";
+            }
+        }
+
+        String report =
+            "AXEY Work - Diagnostik perangkat\\n" +
+            "Android: " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")\\n" +
+            "Kompatibilitas minimum aplikasi: Android 9 (API 28)\\n" +
+            "Fitur managed users: " + (managedUsersSupported ? "TERDETEKSI" : "TIDAK TERDETEKSI") + "\\n" +
+            "DevicePolicyManager: " + (policyManagerAvailable ? "TERSEDIA" : "TIDAK TERSEDIA") + "\\n" +
+            "AXEY Profile Owner pada profil saat ini: " + (localProfileOwner ? "YA" : "TIDAK") + "\\n" +
+            "Provisioning Work Profile baru: " + provisioningState + "\\n" +
+            "Managed Google Play: BELUM TERHUBUNG\\n\\n" +
+            "Catatan: status provisioning hanya menggambarkan izin membuat profil baru saat ini; bukan bukti bahwa profil kerja yang sudah ada bermasalah. " +
+            "Managed Google Play memerlukan pendaftaran Android Enterprise dan backend EMM.\\n" +
+            "Privasi: laporan ini tidak menyertakan email, ID akun, password, atau token.";
+
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (clipboard == null) {
+            showMessage("Clipboard tidak tersedia di perangkat ini.");
+            return;
+        }
+        clipboard.setPrimaryClip(ClipData.newPlainText("AXEY device diagnostics", report));
+        Toast.makeText(this, "Diagnostik perangkat disalin tanpa data akun atau rahasia.", Toast.LENGTH_SHORT).show();
     }
 
     private void openEnterpriseGuide() {
