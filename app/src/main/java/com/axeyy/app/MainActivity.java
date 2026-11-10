@@ -238,6 +238,7 @@ public class MainActivity extends Activity {
             ImageView icon = new ImageView(this);
             Drawable appIcon = info.loadIcon(pm);
             icon.setImageDrawable(appIcon);
+            icon.setContentDescription(String.valueOf(info.loadLabel(pm)));
             LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(38), dp(38));
             row.addView(icon, iconParams);
 
@@ -257,12 +258,14 @@ public class MainActivity extends Activity {
             });
             LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(dp(66), dp(42));
             infoParams.rightMargin = dp(6);
+            detailsButton.setContentDescription("Info aplikasi " + String.valueOf(info.loadLabel(pm)));
             row.addView(detailsButton, infoParams);
 
             Button open = actionButton("BUKA", true, () -> {
                 try { startActivity(launch); }
                 catch (Exception e) { showMessage("Aplikasi tidak bisa dibuka dari profil ini."); }
             });
+            open.setContentDescription("Buka aplikasi " + String.valueOf(info.loadLabel(pm)));
             row.addView(open, new LinearLayout.LayoutParams(dp(76), dp(42)));
             card.addView(row);
             count++;
@@ -275,6 +278,10 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams emptyParams = new LinearLayout.LayoutParams(-1, -2);
             emptyParams.topMargin = dp(12);
             card.addView(empty, emptyParams);
+            Button manage = actionButton("CARI / KELOLA APLIKASI", false, this::openAppManagementSettings);
+            LinearLayout.LayoutParams manageParams = new LinearLayout.LayoutParams(-1, dp(44));
+            manageParams.topMargin = dp(10);
+            card.addView(manage, manageParams);
         }
 
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
