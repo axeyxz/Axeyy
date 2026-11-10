@@ -459,16 +459,16 @@ public class MainActivity extends Activity {
         }
 
         String report =
-            "AXEY Work - Diagnostik perangkat\\n" +
-            "Android: " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")\\n" +
-            "Kompatibilitas minimum aplikasi: Android 9 (API 28)\\n" +
-            "Fitur managed users: " + (managedUsersSupported ? "TERDETEKSI" : "TIDAK TERDETEKSI") + "\\n" +
-            "DevicePolicyManager: " + (policyManagerAvailable ? "TERSEDIA" : "TIDAK TERSEDIA") + "\\n" +
-            "AXEY Profile Owner pada profil saat ini: " + (localProfileOwner ? "YA" : "TIDAK") + "\\n" +
-            "Provisioning Work Profile baru: " + provisioningState + "\\n" +
-            "Managed Google Play: BELUM TERHUBUNG\\n\\n" +
+            "AXEY Work - Diagnostik perangkat\n" +
+            "Android: " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")\n" +
+            "Kompatibilitas minimum aplikasi: Android 9 (API 28)\n" +
+            "Fitur managed users: " + (managedUsersSupported ? "TERDETEKSI" : "TIDAK TERDETEKSI") + "\n" +
+            "DevicePolicyManager: " + (policyManagerAvailable ? "TERSEDIA" : "TIDAK TERSEDIA") + "\n" +
+            "AXEY Profile Owner pada profil saat ini: " + (localProfileOwner ? "YA" : "TIDAK") + "\n" +
+            "Provisioning Work Profile baru: " + provisioningState + "\n" +
+            "Managed Google Play: BELUM TERHUBUNG\n\n" +
             "Catatan: status provisioning hanya menggambarkan izin membuat profil baru saat ini; bukan bukti bahwa profil kerja yang sudah ada bermasalah. " +
-            "Managed Google Play memerlukan pendaftaran Android Enterprise dan backend EMM.\\n" +
+            "Managed Google Play memerlukan pendaftaran Android Enterprise dan backend EMM.\n" +
             "Privasi: laporan ini tidak menyertakan email, ID akun, password, atau token.";
 
         ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
