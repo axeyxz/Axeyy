@@ -6,6 +6,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.content.SharedPreferences;
+import android.content.ClipboardManager;
+import android.content.ClipData;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -28,6 +30,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
     private static final String PREFS = "axey_preferences";
@@ -345,20 +348,48 @@ public class MainActivity extends Activity {
         card.addView(status, statusParams);
 
         TextView detail = label(
-            "Work Profile yang dibuat AXEY saat ini dikelola secara lokal dan belum mendaftarkan perangkat ke organisasi atau Managed Google Play. Integrasi resmi memerlukan backend EMM dan enterprise milik organisasi. Android Management API menggunakan Android Device Policy sebagai DPC; AxeyyAdminReceiver saat ini tidak otomatis kompatibel dengan jalur tersebut.",
+            "Work Profile yang dibuat AXEY saat ini dikelola secara lokal dan belum mendaftarkan perangkat ke organisasi atau Managed Google Play. Akun Google pribadi yang sudah login di HP tidak otomatis menjadi akun kerja terkelola. Android Management API mendaftarkan profil melalui enrollment token dan Android Device Policy; AxeyyAdminReceiver saat ini tidak otomatis kompatibel dengan jalur tersebut.",
             13, textSecondary, false);
         LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
         detailParams.topMargin = dp(7);
         card.addView(detail, detailParams);
 
+        Button checklist = actionButton("SALIN CHECKLIST ENTERPRISE", false, this::copyEnterpriseChecklist);
+        LinearLayout.LayoutParams checklistParams = new LinearLayout.LayoutParams(-1, dp(46));
+        checklistParams.topMargin = dp(12);
+        card.addView(checklist, checklistParams);
+
         Button guide = actionButton("BUKA PANDUAN RESMI", false, this::openEnterpriseGuide);
         LinearLayout.LayoutParams guideParams = new LinearLayout.LayoutParams(-1, dp(46));
-        guideParams.topMargin = dp(12);
+        guideParams.topMargin = dp(10);
         card.addView(guide, guideParams);
 
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
         cardParams.topMargin = dp(14);
         parent.addView(card, cardParams);
+    }
+
+    private void copyEnterpriseChecklist() {
+        String checklist =
+            "AXEY Work - Android Enterprise readiness\\n" +
+            "Current status: not connected to an enterprise or Managed Google Play.\\n\\n" +
+            "Required setup:\\n" +
+            "1. Create a Google Cloud project and enable the Android Management API.\\n" +
+            "2. Complete the Android Enterprise enterprise-binding flow for the organization.\\n" +
+            "3. Run an EMM backend that securely authenticates to Google APIs and creates policies and enrollment tokens.\\n" +
+            "4. Enroll the device through Android Device Policy using a backend-generated enrollment token.\\n" +
+            "5. Configure managed Google Play apps in the enterprise policy.\\n\\n" +
+            "Important: Android Management API supports Android Device Policy as its DPC. AXEY's current AxeyyAdminReceiver is a separate local DPC and cannot act as the Android Management API DPC. A separate supported enrollment flow is required.\\n" +
+            "Do not place service-account keys, passwords, or enrollment tokens in the APK.\\n" +
+            "This report contains no account credentials or tokens.";
+
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (clipboard == null) {
+            showMessage("Clipboard tidak tersedia di perangkat ini.");
+            return;
+        }
+        clipboard.setPrimaryClip(ClipData.newPlainText("AXEY Enterprise checklist", checklist));
+        Toast.makeText(this, "Checklist enterprise disalin.", Toast.LENGTH_SHORT).show();
     }
 
     private void openEnterpriseGuide() {
