@@ -455,8 +455,11 @@ public class MainActivity extends Activity {
         try {
             startActivity(addAccount);
         } catch (Exception e) {
-            showMessage("Layar tambah akun Google tidak tersedia. Buka Pengaturan Work Profile, lalu pilih Akun > Tambahkan akun > Google. Jika penambahan akun dibatasi administrator, hubungi pengelola perangkat.");
-            openWorkProfileSettings();
+            new android.app.AlertDialog.Builder(this)
+                .setMessage("Layar tambah akun Google tidak tersedia. Buka Pengaturan Work Profile, lalu pilih Akun > Tambahkan akun > Google. Jika penambahan akun dibatasi administrator, hubungi pengelola perangkat.")
+                .setNegativeButton("NANTI", null)
+                .setPositiveButton("BUKA PENGATURAN", (dialog, which) -> openWorkProfileSettings())
+                .show();
         }
     }
 
