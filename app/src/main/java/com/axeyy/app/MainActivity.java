@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.os.Build;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
@@ -177,6 +178,11 @@ public class MainActivity extends Activity {
 
         addSection(page, "KEAMANAN & PEMISAHAN",
             "AXEY memakai fitur Work Profile bawaan Android. Data profil kerja tetap dipisahkan oleh sistem Android."
+        );
+        addSection(page, "INFO PERANGKAT",
+            "Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ") • " +
+            (active ? "AXEY terdaftar sebagai pengelola profil kerja." : "Profil kerja belum dibuat.") +
+            "\\nTarget kompatibilitas aplikasi: Android 9 ke atas."
         );
         addSection(page, "CATATAN GOOGLE PLAY",
             "Tombol Play Store hanya membuka aplikasi jika sudah tersedia di profil kerja. Managed Google Play memerlukan penyiapan Android Enterprise oleh organisasi atau penyedia EMM."
