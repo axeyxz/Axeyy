@@ -21,7 +21,6 @@ public class MainActivity extends Activity {
     private final int blue = 0xff2878e8;
     private DevicePolicyManager dpm;
     private ComponentName admin;
-    private LinearLayout root;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -57,15 +56,27 @@ public class MainActivity extends Activity {
         return t;
     }
 
+    private Button makeButton(String label, boolean primary, Runnable action) {
+        Button b = new Button(this);
+        b.setAllCaps(false);
+        b.setText(label);
+        b.setTextColor(Color.WHITE);
+        b.setTextSize(15);
+        b.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        b.setBackground(rounded(primary ? blue : 0xff24344a, 18));
+        b.setOnClickListener(v -> action.run());
+        return b;
+    }
+
     private void render() {
         boolean inWorkProfile = dpm.isProfileOwnerApp(getPackageName());
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
         page.setGravity(Gravity.CENTER_HORIZONTAL);
-        page.setPadding(dp(26), dp(48), dp(26), dp(30));
+        page.setPadding(dp(26), dp(40), dp(26), dp(30));
         page.setBackgroundColor(bg);
 
-        TextView logo = text("AXEYY", 36, Color.WHITE, true);
+        TextView logo = text("AXEY", 36, Color.WHITE, true);
         logo.setGravity(Gravity.CENTER);
         logo.setLetterSpacing(.12f);
         page.addView(logo, new LinearLayout.LayoutParams(-1, dp(62)));
@@ -75,44 +86,52 @@ public class MainActivity extends Activity {
         page.addView(tagline);
 
         View spacer = new View(this);
-        page.addView(spacer, new LinearLayout.LayoutParams(1, dp(58)));
+        page.addView(spacer, new LinearLayout.LayoutParams(1, dp(38)));
 
         LinearLayout status = new LinearLayout(this);
         status.setOrientation(LinearLayout.VERTICAL);
         status.setPadding(dp(20), dp(20), dp(20), dp(20));
         status.setBackground(rounded(panel, 22));
         TextView statusTitle = text(
-            inWorkProfile ? "WORK PROFILE SIAP" : "RUANG KERJA ANDROID",
+            inWorkProfile ? "WORKSPACE AKTIF" : "WORKSPACE ANDROID",
             17, inWorkProfile ? 0xff50dfa8 : Color.WHITE, true);
         status.addView(statusTitle);
         TextView statusDesc = text(
             inWorkProfile
-                ? "AXEYY sedang berjalan di profil kerja."
-                : "Buat profil kerja resmi Android untuk memisahkan Gmail dan aplikasi kerja.",
+                ? "Profil kerja AXEY terdeteksi. Buka Play Store kerja untuk memasang aplikasi."
+                : "Siapkan profil kerja resmi Android. Setelah aktif, AXEY dapat membuka aplikasi di profil kerja.",
             13, 0xffa9bad0, false);
         LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(-1, -2);
         descParams.topMargin = dp(8);
         status.addView(statusDesc, descParams);
         page.addView(status, new LinearLayout.LayoutParams(-1, -2));
 
-        Button action = new Button(this);
-        action.setAllCaps(false);
-        action.setTextColor(Color.WHITE);
-        action.setTextSize(15);
-        action.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        action.setBackground(rounded(blue, 18));
-        action.setText(inWorkProfile ? "BUKA GMAIL KERJA" : "BUAT PROFIL KERJA");
-        action.setOnClickListener(v -> {
-            if (inWorkProfile) openWorkGmail();
-            else createWorkProfile();
-        });
-        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1, dp(58));
-        actionParams.topMargin = dp(22);
-        page.addView(action, actionParams);
+        Button setup = makeButton(
+            inWorkProfile ? "STATUS PROFIL KERJA AKTIF" : "BUAT PROFIL KERJA",
+            true,
+            () -> { if (!inWorkProfile) createWorkProfile(); }
+        );
+        setup.setEnabled(!inWorkProfile);
+        LinearLayout.LayoutParams setupParams = new LinearLayout.LayoutParams(-1, dp(56));
+        setupParams.topMargin = dp(20);
+        page.addView(setup, setupParams);
+
+        if (inWorkProfile) {
+            Button play = makeButton("BUKA GOOGLE PLAY STORE", true, this::openWorkPlayStore);
+            LinearLayout.LayoutParams playParams = new LinearLayout.LayoutParams(-1, dp(56));
+            playParams.topMargin = dp(12);
+            page.addView(play, playParams);
+
+            Button gmail = makeButton("BUKA GMAIL KERJA", false, this::openWorkGmail);
+            LinearLayout.LayoutParams gmailParams = new LinearLayout.LayoutParams(-1, dp(56));
+            gmailParams.topMargin = dp(10);
+            page.addView(gmail, gmailParams);
+        }
 
         TextView footer = text(
-            inWorkProfile ? "Gmail akan dibuka di ruang kerja ini." :
-                "Profil kerja dikelola langsung oleh sistem Android.",
+            inWorkProfile
+                ? "Akun Google pribadi tetap memerlukan autentikasi resmi. Managed Play memerlukan pendaftaran Android Enterprise."
+                : "AXEY menggunakan mekanisme Work Profile bawaan Android.",
             11, 0xff71839b, false);
         footer.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(-1, -2);
@@ -136,25 +155,23 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void openWorkPlayStore() {
+        launchWorkApp("com.android.vending", "Play Store belum tersedia di profil kerja. Perangkat harus mendukung Google Play Services dan Play Store.");
+    }
+
     private void openWorkGmail() {
-        Intent gmail = getPackageManager().getLaunchIntentForPackage("com.google.android.gm");
-        if (gmail != null) {
+        launchWorkApp("com.google.android.gm", "Gmail belum tersedia di profil kerja. Pasang melalui Play Store kerja jika tersedia.");
+    }
+
+    private void launchWorkApp(String packageName, String errorMessage) {
+        Intent launch = getPackageManager().getLaunchIntentForPackage(packageName);
+        if (launch != null) {
             try {
-                startActivity(gmail);
+                startActivity(launch);
                 return;
             } catch (Exception ignored) { }
         }
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW,
-                Uri.parse("market://details?id=com.google.android.gm")));
-        } catch (Exception e) {
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.gm")));
-            } catch (Exception ex) {
-                showMessage("Gmail belum terpasang di profil kerja. Buka Play Store di profil kerja lalu pasang Gmail.");
-            }
-        }
+        showMessage(errorMessage);
     }
 
     private void showMessage(String message) {
