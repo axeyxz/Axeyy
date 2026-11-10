@@ -9,6 +9,15 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -162,6 +171,7 @@ public class MainActivity extends Activity {
                 () -> launchWorkApp("com.google.android.gm",
                     "Gmail belum terpasang. Jika Play Store kerja tersedia, pasang Gmail dari sana."));
             addButton(page, "PENGATURAN WORK PROFILE", false, this::openWorkProfileSettings);
+            addInstalledAppsSection(page);
         }
 
         addSection(page, "KEAMANAN & PEMISAHAN",
@@ -178,6 +188,71 @@ public class MainActivity extends Activity {
         page.addView(footer, footerParams);
 
         setContentView(scroll);
+    }
+
+
+    private void addInstalledAppsSection(LinearLayout parent) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(18), dp(17), dp(18), dp(17));
+        card.setBackground(rounded(surface, 20));
+
+        TextView heading = label("APLIKASI DI WORK PROFILE", 16, textPrimary, true);
+        card.addView(heading);
+        TextView hint = label("Daftar aplikasi yang terpasang di profil kerja ini.", 12, textSecondary, false);
+        LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(-1, -2);
+        hintParams.topMargin = dp(5);
+        card.addView(hint, hintParams);
+
+        Intent launcher = new Intent(Intent.ACTION_MAIN);
+        launcher.addCategory(Intent.CATEGORY_LAUNCHER);
+        PackageManager pm = getPackageManager();
+        List<ResolveInfo> resolved = pm.queryIntentActivities(launcher, 0);
+        Collections.sort(resolved, (a, b) -> String.CASE_INSENSITIVE_ORDER.compare(
+            String.valueOf(a.loadLabel(pm)), String.valueOf(b.loadLabel(pm))));
+
+        Set<String> seen = new HashSet<>();
+        int count = 0;
+        for (ResolveInfo info : resolved) {
+            String packageName = info.activityInfo.packageName;
+            if (getPackageName().equals(packageName) || !seen.add(packageName)) continue;
+            Intent launch = pm.getLaunchIntentForPackage(packageName);
+            if (launch == null) continue;
+
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, dp(10), 0, dp(2));
+
+            ImageView icon = new ImageView(this);
+            Drawable appIcon = info.loadIcon(pm);
+            icon.setImageDrawable(appIcon);
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(38), dp(38));
+            row.addView(icon, iconParams);
+
+            TextView appName = label(String.valueOf(info.loadLabel(pm)), 14, textPrimary, true);
+            LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(0, -2, 1);
+            nameParams.leftMargin = dp(12);
+            row.addView(appName, nameParams);
+
+            Button open = actionButton("BUKA", false, () -> {
+                try { startActivity(pm.getLaunchIntentForPackage(packageName)); }
+                catch (Exception e) { showMessage("Aplikasi tidak bisa dibuka dari profil ini."); }
+            });
+            row.addView(open, new LinearLayout.LayoutParams(dp(82), dp(42)));
+            card.addView(row);
+            count++;
+        }
+
+        if (count == 0) {
+            TextView empty = label("Belum ada aplikasi lain yang terdeteksi di profil kerja.", 13, textSecondary, false);
+            LinearLayout.LayoutParams emptyParams = new LinearLayout.LayoutParams(-1, -2);
+            emptyParams.topMargin = dp(12);
+            card.addView(empty, emptyParams);
+        }
+
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
+        cardParams.topMargin = dp(14);
+        parent.addView(card, cardParams);
     }
 
     private void toggleTheme() {
