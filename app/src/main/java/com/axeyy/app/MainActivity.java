@@ -190,6 +190,7 @@ public class MainActivity extends Activity {
         addSection(page, "CATATAN GOOGLE PLAY",
             "Tombol Play Store hanya membuka aplikasi jika sudah tersedia di profil kerja. Managed Google Play memerlukan penyiapan Android Enterprise oleh organisasi atau penyedia EMM."
         );
+        addEnterpriseIntegrationSection(page);
 
         TextView footer = label("AXEY Work • Android 9+", 11, textSecondary, false);
         footer.setGravity(Gravity.CENTER);
@@ -328,6 +329,46 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
         cardParams.topMargin = dp(14);
         parent.addView(card, cardParams);
+    }
+
+    private void addEnterpriseIntegrationSection(LinearLayout parent) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(18), dp(17), dp(18), dp(17));
+        card.setBackground(rounded(surface, 20));
+
+        card.addView(label("JALUR INTEGRASI ENTERPRISE", 16, textPrimary, true));
+
+        TextView status = label("STATUS: BELUM DIHUBUNGKAN", 12, accent, true);
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1, -2);
+        statusParams.topMargin = dp(8);
+        card.addView(status, statusParams);
+
+        TextView detail = label(
+            "Work Profile yang dibuat AXEY saat ini dikelola secara lokal dan belum mendaftarkan perangkat ke organisasi atau Managed Google Play. Integrasi resmi memerlukan backend EMM dan enterprise milik organisasi. Android Management API menggunakan Android Device Policy sebagai DPC; AxeyyAdminReceiver saat ini tidak otomatis kompatibel dengan jalur tersebut.",
+            13, textSecondary, false);
+        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
+        detailParams.topMargin = dp(7);
+        card.addView(detail, detailParams);
+
+        Button guide = actionButton("BUKA PANDUAN RESMI", false, this::openEnterpriseGuide);
+        LinearLayout.LayoutParams guideParams = new LinearLayout.LayoutParams(-1, dp(46));
+        guideParams.topMargin = dp(12);
+        card.addView(guide, guideParams);
+
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
+        cardParams.topMargin = dp(14);
+        parent.addView(card, cardParams);
+    }
+
+    private void openEnterpriseGuide() {
+        try {
+            Intent guide = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://developers.google.com/android/management/introduction"));
+            startActivity(guide);
+        } catch (Exception e) {
+            showMessage("Panduan Android Enterprise tidak dapat dibuka. Periksa browser dan koneksi internet.");
+        }
     }
 
     private void toggleTheme() {
