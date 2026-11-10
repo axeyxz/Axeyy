@@ -14,7 +14,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.widget.ImageView;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -235,7 +234,7 @@ public class MainActivity extends Activity {
             nameParams.leftMargin = dp(12);
             row.addView(appName, nameParams);
 
-            Button info = actionButton("INFO", false, () -> {
+            Button detailsButton = actionButton("INFO", false, () -> {
                 try {
                     Intent details = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                     details.setData(Uri.parse("package:" + packageName));
@@ -246,7 +245,7 @@ public class MainActivity extends Activity {
             });
             LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(dp(66), dp(42));
             infoParams.rightMargin = dp(6);
-            row.addView(info, infoParams);
+            row.addView(detailsButton, infoParams);
 
             Button open = actionButton("BUKA", true, () -> {
                 try { startActivity(launch); }
@@ -256,6 +255,8 @@ public class MainActivity extends Activity {
             card.addView(row);
             count++;
         }
+
+        heading.setText("APLIKASI DI WORK PROFILE (" + count + ")");
 
         if (count == 0) {
             TextView empty = label("Belum ada aplikasi lain yang terdeteksi di profil kerja.", 13, textSecondary, false);
