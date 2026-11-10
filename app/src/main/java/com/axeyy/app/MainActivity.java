@@ -171,6 +171,7 @@ public class MainActivity extends Activity {
                 () -> launchWorkApp("com.google.android.gm",
                     "Gmail belum terpasang. Jika Play Store kerja tersedia, pasang Gmail dari sana."));
             addButton(page, "PENGATURAN WORK PROFILE", false, this::openWorkProfileSettings);
+            addButton(page, "KELOLA APLIKASI KERJA", false, this::openAppManagementSettings);
             addInstalledAppsSection(page);
         }
 
@@ -313,6 +314,18 @@ public class MainActivity extends Activity {
             startActivity(settings);
         } catch (Exception e) {
             showMessage("Pengaturan profil kerja tidak dapat dibuka di perangkat ini.");
+        }
+    }
+
+    private void openAppManagementSettings() {
+        try {
+            Intent settings = new Intent(android.provider.Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
+            if (settings.resolveActivity(getPackageManager()) == null) {
+                settings = new Intent(android.provider.Settings.ACTION_SETTINGS);
+            }
+            startActivity(settings);
+        } catch (Exception e) {
+            showMessage("Pengelolaan aplikasi tidak dapat dibuka di perangkat ini.");
         }
     }
 
