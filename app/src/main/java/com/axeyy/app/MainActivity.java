@@ -231,6 +231,12 @@ public class MainActivity extends Activity {
         searchParams.topMargin = dp(10);
         card.addView(search, searchParams);
 
+        TextView noResults = label("Tidak ada aplikasi yang cocok dengan pencarian.", 12, textSecondary, false);
+        noResults.setVisibility(View.GONE);
+        LinearLayout.LayoutParams noResultsParams = new LinearLayout.LayoutParams(-1, -2);
+        noResultsParams.topMargin = dp(10);
+        card.addView(noResults, noResultsParams);
+
         List<View> appRows = new java.util.ArrayList<>();
         List<String> appNames = new java.util.ArrayList<>();
 
@@ -296,9 +302,13 @@ public class MainActivity extends Activity {
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
             @Override public void afterTextChanged(Editable value) {
                 String query = value.toString().trim().toLowerCase(java.util.Locale.ROOT);
+                int matches = 0;
                 for (int i = 0; i < appRows.size(); i++) {
-                    appRows.get(i).setVisibility(appNames.get(i).contains(query) ? View.VISIBLE : View.GONE);
+                    boolean match = appNames.get(i).contains(query);
+                    appRows.get(i).setVisibility(match ? View.VISIBLE : View.GONE);
+                    if (match) matches++;
                 }
+                noResults.setVisibility(!appRows.isEmpty() && matches == 0 ? View.VISIBLE : View.GONE);
             }
         });
 
