@@ -171,6 +171,7 @@ public class MainActivity extends Activity {
         if (!active) {
             addButton(page, "BUAT WORK PROFILE", true, this::createWorkProfile);
         } else {
+            addButton(page, "TAMBAH AKUN GOOGLE KERJA", false, this::addGoogleWorkAccount);
             addButton(page, "BUKA GOOGLE PLAY STORE KERJA", true,
                 () -> launchWorkApp("com.android.vending",
                     "Play Store belum terpasang atau belum tersedia di profil kerja."));
@@ -445,6 +446,17 @@ public class MainActivity extends Activity {
             startActivity(launch);
         } catch (Exception e) {
             showMessage(error + "\n" + e.getMessage());
+        }
+    }
+
+    private void addGoogleWorkAccount() {
+        Intent addAccount = new Intent(android.provider.Settings.ACTION_ADD_ACCOUNT);
+        addAccount.putExtra(android.provider.Settings.EXTRA_ACCOUNT_TYPES, new String[] {"com.google"});
+        try {
+            startActivity(addAccount);
+        } catch (Exception e) {
+            showMessage("Layar tambah akun Google tidak tersedia. Buka Pengaturan Work Profile, lalu pilih Akun > Tambahkan akun > Google. Jika penambahan akun dibatasi administrator, hubungi pengelola perangkat.");
+            openWorkProfileSettings();
         }
     }
 
