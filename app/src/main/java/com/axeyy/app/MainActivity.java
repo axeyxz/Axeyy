@@ -4,30 +4,34 @@ import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
-    private final int bg = 0xff080d17;
-    private final int panel = 0xff121d2d;
-    private final int blue = 0xff2878e8;
+    private static final String PREFS = "axey_preferences";
+    private static final String KEY_DARK = "dark_mode";
     private DevicePolicyManager dpm;
     private ComponentName admin;
+    private SharedPreferences preferences;
+    private boolean dark;
+    private int background, surface, textPrimary, textSecondary, accent, buttonSecondary;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(bg);
-        getWindow().setNavigationBarColor(bg);
         dpm = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
         admin = new ComponentName(this, AxeyyAdminReceiver.class);
+        preferences = getSharedPreferences(PREFS, MODE_PRIVATE);
+        dark = preferences.getBoolean(KEY_DARK, true);
+        applyPalette();
         render();
     }
 
@@ -36,114 +40,156 @@ public class MainActivity extends Activity {
         if (dpm != null) render();
     }
 
-    private int dp(int n) {
-        return (int) (n * getResources().getDisplayMetrics().density + .5f);
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + .5f);
+    }
+
+    private void applyPalette() {
+        if (dark) {
+            background = 0xff080d17;
+            surface = 0xff121d2d;
+            textPrimary = 0xfff5f8ff;
+            textSecondary = 0xffa9bad0;
+            accent = 0xff2878e8;
+            buttonSecondary = 0xff24344a;
+        } else {
+            background = 0xfff4f7fb;
+            surface = 0xffffffff;
+            textPrimary = 0xff111827;
+            textSecondary = 0xff536174;
+            accent = 0xff1769d2;
+            buttonSecondary = 0xffe2eaf5;
+        }
+        getWindow().setStatusBarColor(background);
+        getWindow().setNavigationBarColor(background);
+        getWindow().getDecorView().setSystemUiVisibility(
+            dark ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        );
     }
 
     private GradientDrawable rounded(int color, int radius) {
-        GradientDrawable d = new GradientDrawable();
-        d.setColor(color);
-        d.setCornerRadius(dp(radius));
-        return d;
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+        return drawable;
     }
 
-    private TextView text(String value, int size, int color, boolean bold) {
-        TextView t = new TextView(this);
-        t.setText(value);
-        t.setTextSize(size);
-        t.setTextColor(color);
-        if (bold) t.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        return t;
+    private TextView label(String value, int size, int color, boolean bold) {
+        TextView view = new TextView(this);
+        view.setText(value);
+        view.setTextSize(size);
+        view.setTextColor(color);
+        if (bold) view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        return view;
     }
 
-    private Button makeButton(String label, boolean primary, Runnable action) {
-        Button b = new Button(this);
-        b.setAllCaps(false);
-        b.setText(label);
-        b.setTextColor(Color.WHITE);
-        b.setTextSize(15);
-        b.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        b.setBackground(rounded(primary ? blue : 0xff24344a, 18));
-        b.setOnClickListener(v -> action.run());
-        return b;
+    private Button actionButton(String title, boolean primary, Runnable action) {
+        Button button = new Button(this);
+        button.setAllCaps(false);
+        button.setText(title);
+        button.setTextSize(14);
+        button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        button.setTextColor(primary || dark ? Color.WHITE : textPrimary);
+        button.setBackground(rounded(primary ? accent : buttonSecondary, 16));
+        button.setOnClickListener(v -> action.run());
+        return button;
+    }
+
+    private void addButton(LinearLayout parent, String title, boolean primary, Runnable action) {
+        Button button = actionButton(title, primary, action);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, dp(54));
+        params.topMargin = dp(10);
+        parent.addView(button, params);
+    }
+
+    private void addSection(LinearLayout parent, String title, String description) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(18), dp(17), dp(18), dp(17));
+        card.setBackground(rounded(surface, 20));
+        TextView heading = label(title, 16, textPrimary, true);
+        card.addView(heading);
+        TextView detail = label(description, 13, textSecondary, false);
+        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
+        detailParams.topMargin = dp(7);
+        card.addView(detail, detailParams);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
+        cardParams.topMargin = dp(14);
+        parent.addView(card, cardParams);
     }
 
     private void render() {
-        boolean inWorkProfile = dpm.isProfileOwnerApp(getPackageName());
+        boolean active = dpm != null && dpm.isProfileOwnerApp(getPackageName());
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(background);
+
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
-        page.setGravity(Gravity.CENTER_HORIZONTAL);
-        page.setPadding(dp(26), dp(40), dp(26), dp(30));
-        page.setBackgroundColor(bg);
+        page.setPadding(dp(22), dp(26), dp(22), dp(28));
+        scroll.addView(page);
 
-        TextView logo = text("AXEY", 36, Color.WHITE, true);
-        logo.setGravity(Gravity.CENTER);
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        TextView logo = label("AXEY", 31, textPrimary, true);
         logo.setLetterSpacing(.12f);
-        page.addView(logo, new LinearLayout.LayoutParams(-1, dp(62)));
+        header.addView(logo, new LinearLayout.LayoutParams(0, -2, 1));
+        Button theme = actionButton(dark ? "☀ Terang" : "☾ Gelap", false, this::toggleTheme);
+        header.addView(theme, new LinearLayout.LayoutParams(-2, dp(44)));
+        page.addView(header);
 
-        TextView tagline = text("YOUR WORKSPACE", 12, 0xff78b7ff, true);
-        tagline.setGravity(Gravity.CENTER);
-        page.addView(tagline);
+        TextView subtitle = label("WORKSPACE MANAGER", 11, accent, true);
+        subtitle.setLetterSpacing(.14f);
+        LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(-1, -2);
+        subtitleParams.topMargin = dp(3);
+        page.addView(subtitle, subtitleParams);
 
-        View spacer = new View(this);
-        page.addView(spacer, new LinearLayout.LayoutParams(1, dp(38)));
-
-        LinearLayout status = new LinearLayout(this);
-        status.setOrientation(LinearLayout.VERTICAL);
-        status.setPadding(dp(20), dp(20), dp(20), dp(20));
-        status.setBackground(rounded(panel, 22));
-        TextView statusTitle = text(
-            inWorkProfile ? "WORKSPACE AKTIF" : "WORKSPACE ANDROID",
-            17, inWorkProfile ? 0xff50dfa8 : Color.WHITE, true);
-        status.addView(statusTitle);
-        TextView statusDesc = text(
-            inWorkProfile
-                ? "Profil kerja AXEY terdeteksi. Buka Play Store kerja untuk memasang aplikasi."
-                : "Siapkan profil kerja resmi Android. Setelah aktif, AXEY dapat membuka aplikasi di profil kerja.",
-            13, 0xffa9bad0, false);
-        LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(-1, -2);
-        descParams.topMargin = dp(8);
-        status.addView(statusDesc, descParams);
-        page.addView(status, new LinearLayout.LayoutParams(-1, -2));
-
-        Button setup = makeButton(
-            inWorkProfile ? "STATUS PROFIL KERJA AKTIF" : "BUAT PROFIL KERJA",
-            true,
-            () -> { if (!inWorkProfile) createWorkProfile(); }
+        addSection(page,
+            active ? "● WORK PROFILE AKTIF" : "○ WORK PROFILE BELUM AKTIF",
+            active
+                ? "AXEY berjalan di profil kerja Android. Aplikasi kerja dikelola terpisah dari profil pribadi."
+                : "Buat profil kerja resmi Android untuk memisahkan aplikasi dan data kerja dari profil pribadi."
         );
-        setup.setEnabled(!inWorkProfile);
-        LinearLayout.LayoutParams setupParams = new LinearLayout.LayoutParams(-1, dp(56));
-        setupParams.topMargin = dp(20);
-        page.addView(setup, setupParams);
 
-        if (inWorkProfile) {
-            Button play = makeButton("BUKA GOOGLE PLAY STORE", true, this::openWorkPlayStore);
-            LinearLayout.LayoutParams playParams = new LinearLayout.LayoutParams(-1, dp(56));
-            playParams.topMargin = dp(12);
-            page.addView(play, playParams);
-
-            Button gmail = makeButton("BUKA GMAIL KERJA", false, this::openWorkGmail);
-            LinearLayout.LayoutParams gmailParams = new LinearLayout.LayoutParams(-1, dp(56));
-            gmailParams.topMargin = dp(10);
-            page.addView(gmail, gmailParams);
+        if (!active) {
+            addButton(page, "BUAT WORK PROFILE", true, this::createWorkProfile);
+        } else {
+            addButton(page, "BUKA GOOGLE PLAY STORE KERJA", true,
+                () -> launchWorkApp("com.android.vending",
+                    "Play Store belum terpasang atau belum tersedia di profil kerja."));
+            addButton(page, "BUKA GMAIL KERJA", false,
+                () -> launchWorkApp("com.google.android.gm",
+                    "Gmail belum terpasang. Jika Play Store kerja tersedia, pasang Gmail dari sana."));
+            addButton(page, "PENGATURAN WORK PROFILE", false, this::openWorkProfileSettings);
         }
 
-        TextView footer = text(
-            inWorkProfile
-                ? "Akun Google pribadi tetap memerlukan autentikasi resmi. Managed Play memerlukan pendaftaran Android Enterprise."
-                : "AXEY menggunakan mekanisme Work Profile bawaan Android.",
-            11, 0xff71839b, false);
+        addSection(page, "KEAMANAN & PEMISAHAN",
+            "AXEY memakai fitur Work Profile bawaan Android. Data profil kerja tetap dipisahkan oleh sistem Android."
+        );
+        addSection(page, "CATATAN GOOGLE PLAY",
+            "Tombol Play Store hanya membuka aplikasi jika sudah tersedia di profil kerja. Managed Google Play memerlukan penyiapan Android Enterprise oleh organisasi atau penyedia EMM."
+        );
+
+        TextView footer = label("AXEY Work • Android 9+", 11, textSecondary, false);
         footer.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(-1, -2);
-        footerParams.topMargin = dp(18);
+        footerParams.topMargin = dp(22);
         page.addView(footer, footerParams);
 
-        setContentView(page);
+        setContentView(scroll);
+    }
+
+    private void toggleTheme() {
+        dark = !dark;
+        preferences.edit().putBoolean(KEY_DARK, dark).apply();
+        applyPalette();
+        render();
     }
 
     private void createWorkProfile() {
-        if (!dpm.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE)) {
-            showMessage("Android belum mengizinkan pembuatan profil kerja. Periksa apakah profil kerja lain sudah aktif atau perangkat membatasi fitur ini.");
+        if (dpm == null || !dpm.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE)) {
+            showMessage("Android belum mengizinkan pembuatan Work Profile. Periksa apakah profil kerja lain sudah aktif atau perangkat membatasi fitur ini.");
             return;
         }
         Intent setup = new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
@@ -151,27 +197,33 @@ public class MainActivity extends Activity {
         try {
             startActivity(setup);
         } catch (Exception e) {
-            showMessage("Tidak bisa membuka pembuatan profil kerja: " + e.getMessage());
+            showMessage("Tidak bisa membuka proses Work Profile: " + e.getMessage());
         }
     }
 
-    private void openWorkPlayStore() {
-        launchWorkApp("com.android.vending", "Play Store belum tersedia di profil kerja. Perangkat harus mendukung Google Play Services dan Play Store.");
-    }
-
-    private void openWorkGmail() {
-        launchWorkApp("com.google.android.gm", "Gmail belum tersedia di profil kerja. Pasang melalui Play Store kerja jika tersedia.");
-    }
-
-    private void launchWorkApp(String packageName, String errorMessage) {
-        Intent launch = getPackageManager().getLaunchIntentForPackage(packageName);
-        if (launch != null) {
-            try {
-                startActivity(launch);
+    private void launchWorkApp(String packageName, String error) {
+        try {
+            Intent launch = getPackageManager().getLaunchIntentForPackage(packageName);
+            if (launch == null) {
+                showMessage(error);
                 return;
-            } catch (Exception ignored) { }
+            }
+            startActivity(launch);
+        } catch (Exception e) {
+            showMessage(error + "\n" + e.getMessage());
         }
-        showMessage(errorMessage);
+    }
+
+    private void openWorkProfileSettings() {
+        try {
+            Intent settings = new Intent("android.settings.MANAGED_PROFILE_SETTINGS");
+            if (settings.resolveActivity(getPackageManager()) == null) {
+                settings = new Intent(android.provider.Settings.ACTION_SETTINGS);
+            }
+            startActivity(settings);
+        } catch (Exception e) {
+            showMessage("Pengaturan profil kerja tidak dapat dibuka di perangkat ini.");
+        }
     }
 
     private void showMessage(String message) {
