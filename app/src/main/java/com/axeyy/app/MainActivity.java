@@ -386,6 +386,13 @@ public class MainActivity extends Activity {
                     () -> confirmHideWorkApp(packageName, String.valueOf(info.loadLabel(pm))));
                 hide.setContentDescription("Sembunyikan aplikasi " + String.valueOf(info.loadLabel(pm)));
                 actions.addView(hide, new LinearLayout.LayoutParams(0, dp(42), 1));
+
+                Button reset = actionButton("RESET DATA", false,
+                    () -> confirmResetWorkApp(packageName, String.valueOf(info.loadLabel(pm))));
+                reset.setContentDescription("Reset data aplikasi " + String.valueOf(info.loadLabel(pm)));
+                LinearLayout.LayoutParams resetParams = new LinearLayout.LayoutParams(-1, dp(42));
+                resetParams.topMargin = dp(7);
+                row.addView(reset, resetParams);
             }
 
             card.addView(row);
@@ -427,6 +434,46 @@ public class MainActivity extends Activity {
         cardParams.topMargin = dp(14);
         parent.addView(card, cardParams);
         addHiddenWorkAppsSection(parent);
+    }
+
+    private void confirmResetWorkApp(String packageName, String appLabel) {
+        if (dpm == null || !dpm.isProfileOwnerApp(getPackageName())) {
+            showMessage("Reset data hanya tersedia ketika AXEY menjadi Profile Owner Work Profile ini.");
+            return;
+        }
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Reset data " + appLabel + "?")
+            .setMessage(
+                "Semua data lokal aplikasi, termasuk cache, database, pengaturan, dan sesi login akan dihapus. " +
+                "Aplikasi tetap terpasang. Akun Google pada Work Profile tidak dihapus, tetapi akun di dalam aplikasi ini mungkin perlu login ulang. " +
+                "Data yang belum dicadangkan dapat hilang permanen."
+            )
+            .setNegativeButton("BATAL", null)
+            .setPositiveButton("RESET DATA", (dialog, which) -> {
+                try {
+                    boolean accepted = dpm.clearApplicationUserData(
+                        admin,
+                        packageName,
+                        getMainExecutor(),
+                        (clearedPackage, succeeded) -> {
+                            if (succeeded) {
+                                showMessage("Data " + appLabel + " berhasil direset. Aplikasi tetap terpasang; buka kembali untuk memulai dari kondisi awal.");
+                            } else {
+                                showMessage("Android tidak berhasil menghapus data " + appLabel + ".");
+                            }
+                            render();
+                        }
+                    );
+                    if (!accepted) {
+                        showMessage("Android tidak menerima permintaan reset data untuk aplikasi ini.");
+                    }
+                } catch (SecurityException e) {
+                    showMessage("AXEY tidak memiliki izin Profile Owner untuk mereset aplikasi ini.");
+                } catch (RuntimeException e) {
+                    showMessage("Reset data tidak dapat dimulai: " + e.getMessage());
+                }
+            })
+            .show();
     }
 
     private void confirmHideWorkApp(String packageName, String appLabel) {
