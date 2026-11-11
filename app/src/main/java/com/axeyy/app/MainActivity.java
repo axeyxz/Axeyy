@@ -782,7 +782,7 @@ public class MainActivity extends Activity {
         Intent setup = new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
         setup.putExtra(
             DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
-            admin.flattenToString()
+            admin
         );
         if (setup.resolveActivity(getPackageManager()) == null) {
             showMessage("Wizard resmi Android untuk membuat Work Profile tidak tersedia di perangkat ini.");
