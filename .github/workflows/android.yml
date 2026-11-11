@@ -36,6 +36,17 @@ jobs:
           grep -Fq 'dpm.clearApplicationUserData(' "$MAIN_ACTIVITY"
           grep -Fq 'confirmResetWorkApp(packageName' "$MAIN_ACTIVITY"
           grep -Fq 'Akun Google pada Work Profile tidak dihapus' "$MAIN_ACTIVITY"
+      - name: Verify provisioning callback resilience
+        shell: bash
+        run: |
+          set -euo pipefail
+          RECEIVER="app/src/main/java/com/axeyy/app/AxeyyAdminReceiver.java"
+          grep -Fq 'onProfileProvisioningComplete(Context context, Intent intent)' "$RECEIVER"
+          grep -Fq 'if (policyManager == null)' "$RECEIVER"
+          grep -Fq 'policyManager.setProfileName(admin, "AXEYY Workspace")' "$RECEIVER"
+          grep -Fq 'policyManager.setProfileEnabled(admin)' "$RECEIVER"
+          grep -Fq 'catch (RuntimeException e)' "$RECEIVER"
+          grep -Fq 'Log.e(TAG' "$RECEIVER"
       - name: Verify Work Profile manifest contract
         shell: bash
         run: |
@@ -64,7 +75,7 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           test -n "$AAPT"
           BADGING="$("$AAPT" dump badging "$APK")"
-          grep -q "package: name='com.axeyy.app' versionCode='8' versionName='1.3.4'" <<< "$BADGING"
+          grep -q "package: name='com.axeyy.app' versionCode='9' versionName='1.3.5'" <<< "$BADGING"
           grep -q "sdkVersion:'28'" <<< "$BADGING"
           grep -q "targetSdkVersion:'35'" <<< "$BADGING"
       - uses: actions/upload-artifact@v7
