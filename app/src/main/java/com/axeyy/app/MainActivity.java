@@ -205,7 +205,7 @@ public class MainActivity extends Activity {
         addSection(page, "INFO PERANGKAT",
             "Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ") • " +
             (active ? "AXEY terdaftar sebagai pengelola profil kerja." : "Profil kerja belum dibuat.") +
-            "\\nTarget kompatibilitas aplikasi: Android 9 ke atas."
+            "\nTarget kompatibilitas aplikasi: Android 9 ke atas."
         );
         addSection(page, "CATATAN GOOGLE PLAY",
             "Tombol Play Store hanya membuka aplikasi jika sudah tersedia di profil kerja. Managed Google Play memerlukan penyiapan Android Enterprise oleh organisasi atau penyedia EMM."
@@ -444,7 +444,9 @@ public class MainActivity extends Activity {
             && dpm.isProfileOwnerApp(getPackageName());
 
         String provisioningState;
-        if (!managedUsersSupported) {
+        if (localProfileOwner) {
+            provisioningState = "SUDAH PROFILE OWNER (PROVISIONING BARU TIDAK DIPERLUKAN)";
+        } else if (!managedUsersSupported) {
             provisioningState = "TIDAK DIDUKUNG OLEH SISTEM";
         } else if (!policyManagerAvailable) {
             provisioningState = "LAYANAN TIDAK TERSEDIA";
