@@ -20,6 +20,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
+      - name: Verify Work Profile manifest contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          MANIFEST="app/src/main/AndroidManifest.xml"
+          grep -Eq 'android:name="android.software.managed_users".*android:required="false"' "$MANIFEST"
+          grep -Fq 'android:name=".AxeyyAdminReceiver"' "$MANIFEST"
+          grep -Fq 'android:permission="android.permission.BIND_DEVICE_ADMIN"' "$MANIFEST"
+          grep -Fq 'android.app.action.PROFILE_PROVISIONING_COMPLETE' "$MANIFEST"
       - name: Verify Android compatibility and APK metadata
         shell: bash
         run: |
