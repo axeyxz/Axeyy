@@ -36,6 +36,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     private static final String PREFS = "axey_preferences";
     private static final String KEY_DARK = "dark_mode";
+    private static final String KEY_HIDDEN_APPS = "hidden_work_profile_apps";
     private DevicePolicyManager dpm;
     private ComponentName admin;
     private SharedPreferences preferences;
@@ -244,7 +245,7 @@ public class MainActivity extends Activity {
 
         TextView heading = label("APLIKASI DI WORK PROFILE", 16, textPrimary, true);
         card.addView(heading);
-        TextView hint = label("Daftar aplikasi yang terpasang di profil kerja ini.", 12, textSecondary, false);
+        TextView hint = label("Daftar aplikasi di profil kerja. Aplikasi pengguna dapat disembunyikan dan dipulihkan tanpa menghapus datanya.", 12, textSecondary, false);
         LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(-1, -2);
         hintParams.topMargin = dp(5);
         card.addView(hint, hintParams);
@@ -291,20 +292,36 @@ public class MainActivity extends Activity {
             if (launch == null) continue;
 
             LinearLayout row = new LinearLayout(this);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(0, dp(10), 0, dp(2));
+            row.setOrientation(LinearLayout.VERTICAL);
+            row.setPadding(0, dp(10), 0, dp(8));
+
+            LinearLayout summary = new LinearLayout(this);
+            summary.setGravity(Gravity.CENTER_VERTICAL);
 
             ImageView icon = new ImageView(this);
             Drawable appIcon = info.loadIcon(pm);
             icon.setImageDrawable(appIcon);
             icon.setContentDescription(String.valueOf(info.loadLabel(pm)));
-            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(38), dp(38));
-            row.addView(icon, iconParams);
+            summary.addView(icon, new LinearLayout.LayoutParams(dp(38), dp(38)));
 
+            LinearLayout appText = new LinearLayout(this);
+            appText.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams appTextParams = new LinearLayout.LayoutParams(0, -2, 1);
+            appTextParams.leftMargin = dp(12);
             TextView appName = label(String.valueOf(info.loadLabel(pm)), 14, textPrimary, true);
-            LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(0, -2, 1);
-            nameParams.leftMargin = dp(12);
-            row.addView(appName, nameParams);
+            appText.addView(appName);
+            TextView packageLabel = label(packageName, 10, textSecondary, false);
+            LinearLayout.LayoutParams packageParams = new LinearLayout.LayoutParams(-1, -2);
+            packageParams.topMargin = dp(2);
+            appText.addView(packageLabel, packageParams);
+            summary.addView(appText, appTextParams);
+            row.addView(summary);
+
+            LinearLayout actions = new LinearLayout(this);
+            actions.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(-1, -2);
+            actionsParams.topMargin = dp(8);
+            row.addView(actions, actionsParams);
 
             Button detailsButton = actionButton("INFO", false, () -> {
                 try {
@@ -315,20 +332,45 @@ public class MainActivity extends Activity {
                     showMessage("Info aplikasi tidak dapat dibuka dari profil ini.");
                 }
             });
-            LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(dp(66), dp(42));
-            infoParams.rightMargin = dp(6);
             detailsButton.setContentDescription("Info aplikasi " + String.valueOf(info.loadLabel(pm)));
-            row.addView(detailsButton, infoParams);
+            LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(0, dp(42), 1);
+            infoParams.rightMargin = dp(6);
+            actions.addView(detailsButton, infoParams);
 
             Button open = actionButton("BUKA", true, () -> {
                 try { startActivity(launch); }
                 catch (Exception e) { showMessage("Aplikasi tidak bisa dibuka dari profil ini."); }
             });
             open.setContentDescription("Buka aplikasi " + String.valueOf(info.loadLabel(pm)));
-            row.addView(open, new LinearLayout.LayoutParams(dp(76), dp(42)));
+            LinearLayout.LayoutParams openParams = new LinearLayout.LayoutParams(0, dp(42), 1);
+            boolean userInstalled = (info.activityInfo.applicationInfo.flags
+                & android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0;
+            boolean protectedPackage =
+                "com.android.settings".equals(packageName)
+                || "com.android.systemui".equals(packageName)
+                || "com.android.vending".equals(packageName)
+                || "com.google.android.gms".equals(packageName)
+                || "com.google.android.gsf".equals(packageName)
+                || "com.android.packageinstaller".equals(packageName)
+                || "com.google.android.packageinstaller".equals(packageName)
+                || "com.android.permissioncontroller".equals(packageName)
+                || "com.google.android.permissioncontroller".equals(packageName);
+            if (userInstalled && !protectedPackage) {
+                openParams.rightMargin = dp(6);
+            }
+            actions.addView(open, openParams);
+
+            if (userInstalled && !protectedPackage) {
+                Button hide = actionButton("SEMBUNYI", false,
+                    () -> confirmHideWorkApp(packageName, String.valueOf(info.loadLabel(pm))));
+                hide.setContentDescription("Sembunyikan aplikasi " + String.valueOf(info.loadLabel(pm)));
+                actions.addView(hide, new LinearLayout.LayoutParams(0, dp(42), 1));
+            }
+
             card.addView(row);
             appRows.add(row);
-            appNames.add(String.valueOf(info.loadLabel(pm)).toLowerCase(java.util.Locale.ROOT));
+            appNames.add((String.valueOf(info.loadLabel(pm)) + " " + packageName)
+                .toLowerCase(java.util.Locale.ROOT));
             count++;
         }
 
@@ -358,6 +400,82 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams manageParams = new LinearLayout.LayoutParams(-1, dp(44));
             manageParams.topMargin = dp(10);
             card.addView(manage, manageParams);
+        }
+
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
+        cardParams.topMargin = dp(14);
+        parent.addView(card, cardParams);
+        addHiddenWorkAppsSection(parent);
+    }
+
+    private void confirmHideWorkApp(String packageName, String appLabel) {
+        if (dpm == null || !dpm.isProfileOwnerApp(getPackageName())) {
+            showMessage("AXEY harus menjadi Profile Owner pada Work Profile ini untuk menyembunyikan aplikasi.");
+            return;
+        }
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Sembunyikan aplikasi kerja?")
+            .setMessage(appLabel + " (" + packageName + ") akan disembunyikan hanya dari Work Profile. Aplikasi dan datanya tidak dihapus. Lu dapat memulihkannya dari bagian aplikasi tersembunyi di AXEY.")
+            .setNegativeButton("BATAL", null)
+            .setPositiveButton("SEMBUNYIKAN", (dialog, which) -> setWorkAppHidden(packageName, true))
+            .show();
+    }
+
+    private void setWorkAppHidden(String packageName, boolean hidden) {
+        if (dpm == null || !dpm.isProfileOwnerApp(getPackageName())) {
+            showMessage("AXEY bukan Profile Owner pada profil ini. Tidak ada perubahan yang dilakukan.");
+            return;
+        }
+        try {
+            boolean updated = dpm.setApplicationHidden(admin, packageName, hidden);
+            if (!updated) {
+                showMessage("Android tidak dapat memperbarui status aplikasi " + packageName + ".");
+                return;
+            }
+            Set<String> hiddenApps = new HashSet<>(
+                preferences.getStringSet(KEY_HIDDEN_APPS, Collections.emptySet()));
+            if (hidden) hiddenApps.add(packageName);
+            else hiddenApps.remove(packageName);
+            preferences.edit().putStringSet(KEY_HIDDEN_APPS, hiddenApps).apply();
+            Toast.makeText(this,
+                hidden ? "Aplikasi disembunyikan dari Work Profile." : "Aplikasi dipulihkan di Work Profile.",
+                Toast.LENGTH_SHORT).show();
+            render();
+        } catch (SecurityException e) {
+            showMessage("Android menolak perubahan aplikasi. Pastikan AXEY masih menjadi Profile Owner.");
+        } catch (RuntimeException e) {
+            showMessage("Perubahan aplikasi gagal: " + e.getMessage());
+        }
+    }
+
+    private void addHiddenWorkAppsSection(LinearLayout parent) {
+        Set<String> hiddenApps = new HashSet<>(
+            preferences.getStringSet(KEY_HIDDEN_APPS, Collections.emptySet()));
+        if (hiddenApps.isEmpty()) return;
+
+        List<String> sortedPackages = new java.util.ArrayList<>(hiddenApps);
+        Collections.sort(sortedPackages, String.CASE_INSENSITIVE_ORDER);
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(18), dp(17), dp(18), dp(17));
+        card.setBackground(rounded(surface, 20));
+        card.addView(label("APLIKASI TERSEMBUNYI OLEH AXEY (" + sortedPackages.size() + ")", 15, textPrimary, true));
+        TextView hint = label("Aplikasi tetap terpasang dan datanya tidak dihapus. Pulihkan kapan saja dari sini.", 12, textSecondary, false);
+        LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(-1, -2);
+        hintParams.topMargin = dp(6);
+        card.addView(hint, hintParams);
+
+        for (String packageName : sortedPackages) {
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, dp(9), 0, dp(2));
+            TextView name = label(packageName, 12, textPrimary, false);
+            row.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
+            Button restore = actionButton("PULIHKAN", true,
+                () -> setWorkAppHidden(packageName, false));
+            row.addView(restore, new LinearLayout.LayoutParams(dp(104), dp(42)));
+            card.addView(row);
         }
 
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
