@@ -451,7 +451,7 @@ public class MainActivity extends Activity {
             .setNegativeButton("BATAL", null)
             .setPositiveButton("RESET DATA", (dialog, which) -> {
                 try {
-                    boolean accepted = dpm.clearApplicationUserData(
+                    dpm.clearApplicationUserData(
                         admin,
                         packageName,
                         getMainExecutor(),
@@ -464,9 +464,6 @@ public class MainActivity extends Activity {
                             render();
                         }
                     );
-                    if (!accepted) {
-                        showMessage("Android tidak menerima permintaan reset data untuk aplikasi ini.");
-                    }
                 } catch (SecurityException e) {
                     showMessage("AXEY tidak memiliki izin Profile Owner untuk mereset aplikasi ini.");
                 } catch (RuntimeException e) {
