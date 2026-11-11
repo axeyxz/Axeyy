@@ -29,7 +29,7 @@ jobs:
           grep -Fq 'admin = new ComponentName(this, AxeyyAdminReceiver.class);' "$MAIN_ACTIVITY"
           grep -Fq 'DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,' "$MAIN_ACTIVITY"
           grep -Fq '            admin.flattenToString()' "$MAIN_ACTIVITY"
-          if grep -Fq '            admin' "$MAIN_ACTIVITY"; then echo 'Provisioning extra must be a flattened ComponentName string'; exit 1; fi
+          if grep -Fqx '            admin' "$MAIN_ACTIVITY"; then echo 'Provisioning extra must be a flattened ComponentName string'; exit 1; fi
           grep -Fq 'setup.resolveActivity(getPackageManager()) == null' "$MAIN_ACTIVITY"
           grep -Fq 'startActivityForResult(setup, REQUEST_CREATE_WORK_PROFILE)' "$MAIN_ACTIVITY"
           grep -Fq 'requestCode != REQUEST_CREATE_WORK_PROFILE' "$MAIN_ACTIVITY"
