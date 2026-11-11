@@ -436,6 +436,16 @@ public class MainActivity extends Activity {
         Toast.makeText(this, "Checklist enterprise disalin.", Toast.LENGTH_SHORT).show();
     }
 
+    private String getAppVersionLabel() {
+        try {
+            android.content.pm.PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
+            String versionName = info.versionName == null ? "unknown" : info.versionName;
+            return versionName + " (code " + info.getLongVersionCode() + ")";
+        } catch (PackageManager.NameNotFoundException e) {
+            return "TIDAK TERSEDIA";
+        }
+    }
+
     private void copyDeviceDiagnostics() {
         boolean managedUsersSupported = getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
@@ -463,6 +473,7 @@ public class MainActivity extends Activity {
         String report =
             "AXEY Work - Diagnostik perangkat\n" +
             "Android: " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")\n" +
+            "Versi AXEY: " + getAppVersionLabel() + "\n" +
             "Kompatibilitas minimum aplikasi: Android 9 (API 28)\n" +
             "Fitur managed users: " + (managedUsersSupported ? "TERDETEKSI" : "TIDAK TERDETEKSI") + "\n" +
             "DevicePolicyManager: " + (policyManagerAvailable ? "TERSEDIA" : "TIDAK TERSEDIA") + "\n" +
