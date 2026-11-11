@@ -629,6 +629,12 @@ public class MainActivity extends Activity {
         guideParams.topMargin = dp(10);
         card.addView(guide, guideParams);
 
+        Button appDistributionGuide = actionButton(
+            "PANDUAN DISTRIBUSI APLIKASI", false, this::openManagedGooglePlayGuide);
+        LinearLayout.LayoutParams appDistributionParams = new LinearLayout.LayoutParams(-1, dp(46));
+        appDistributionParams.topMargin = dp(10);
+        card.addView(appDistributionGuide, appDistributionParams);
+
         Button diagnostics = actionButton("SALIN DIAGNOSTIK PERANGKAT", false, this::copyDeviceDiagnostics);
         LinearLayout.LayoutParams diagnosticsParams = new LinearLayout.LayoutParams(-1, dp(46));
         diagnosticsParams.topMargin = dp(10);
@@ -648,8 +654,10 @@ public class MainActivity extends Activity {
             "2. Complete the Android Enterprise enterprise-binding flow for the organization.\n" +
             "3. Run an EMM backend that securely authenticates to Google APIs and creates policies and enrollment tokens.\n" +
             "4. Enroll the device through Android Device Policy using a backend-generated enrollment token.\n" +
-            "5. Configure managed Google Play apps in the enterprise policy.\n\n" +
+            "5. Integrate the Managed Google Play iframe in the EMM admin console so an organization admin can search for and select apps.\n" +
+            "6. Send selected package names to the backend and add them to the Android Management API policy applications list for installation or availability.\n\n" +
             "Important: Android Management API supports Android Device Policy as its DPC. AXEY's current AxeyyAdminReceiver is a separate local DPC and cannot act as the Android Management API DPC. A separate supported enrollment flow is required.\n" +
+            "AXEY's Android app is not the EMM backend. Keep API credentials, enterprise tokens, policies, and enrollment-token creation on the secured backend.\n" +
             "Do not place service-account keys, passwords, or enrollment tokens in the APK.\n" +
             "This report contains no account credentials or tokens.";
 
@@ -728,6 +736,16 @@ public class MainActivity extends Activity {
             startActivity(guide);
         } catch (Exception e) {
             showMessage("Panduan Android Enterprise tidak dapat dibuka. Periksa browser dan koneksi internet.");
+        }
+    }
+
+    private void openManagedGooglePlayGuide() {
+        try {
+            Intent guide = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://developers.google.com/android/management/apps"));
+            startActivity(guide);
+        } catch (Exception e) {
+            showMessage("Panduan distribusi aplikasi Managed Google Play tidak dapat dibuka. Periksa browser dan koneksi internet.");
         }
     }
 
