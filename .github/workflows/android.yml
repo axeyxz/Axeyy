@@ -30,6 +30,9 @@ jobs:
           grep -Fq 'startActivityForResult(setup, REQUEST_CREATE_WORK_PROFILE)' "$MAIN_ACTIVITY"
           grep -Fq 'requestCode != REQUEST_CREATE_WORK_PROFILE' "$MAIN_ACTIVITY"
           grep -Fq 'resultCode == RESULT_OK' "$MAIN_ACTIVITY"
+          grep -Fq 'dpm.clearApplicationUserData(' "$MAIN_ACTIVITY"
+          grep -Fq 'confirmResetWorkApp(packageName' "$MAIN_ACTIVITY"
+          grep -Fq 'Akun Google pada Work Profile tidak dihapus' "$MAIN_ACTIVITY"
       - name: Verify Work Profile manifest contract
         shell: bash
         run: |
@@ -48,7 +51,7 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           test -n "$AAPT"
           BADGING="$("$AAPT" dump badging "$APK")"
-          grep -q "package: name='com.axeyy.app' versionCode='5' versionName='1.3.1'" <<< "$BADGING"
+          grep -q "package: name='com.axeyy.app' versionCode='6' versionName='1.3.2'" <<< "$BADGING"
           grep -q "sdkVersion:'28'" <<< "$BADGING"
           grep -q "targetSdkVersion:'35'" <<< "$BADGING"
       - uses: actions/upload-artifact@v7
