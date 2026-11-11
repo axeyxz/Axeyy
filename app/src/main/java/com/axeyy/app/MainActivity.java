@@ -13,6 +13,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Build;
+import android.os.UserManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.content.pm.PackageManager;
@@ -54,6 +55,11 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         if (dpm != null) render();
+    }
+
+    private boolean isManagedProfileContext() {
+        UserManager userManager = (UserManager) getSystemService(USER_SERVICE);
+        return userManager != null && userManager.isManagedProfile();
     }
 
     private int dp(int value) {
@@ -136,6 +142,7 @@ public class MainActivity extends Activity {
 
     private void render() {
         boolean active = dpm != null && dpm.isProfileOwnerApp(getPackageName());
+        boolean managedProfileContext = isManagedProfileContext();
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(background);
@@ -162,13 +169,20 @@ public class MainActivity extends Activity {
         page.addView(subtitle, subtitleParams);
 
         addSection(page,
-            active ? "● WORK PROFILE AKTIF" : "○ WORK PROFILE BELUM AKTIF",
+            active ? "● WORK PROFILE AKTIF" : managedProfileContext ? "● BERJALAN DI WORK PROFILE" : "○ WORK PROFILE BELUM AKTIF",
             active
-                ? "AXEY berjalan di profil kerja Android. Aplikasi kerja dikelola terpisah dari profil pribadi."
-                : "Buat profil kerja resmi Android untuk memisahkan aplikasi dan data kerja dari profil pribadi."
+                ? "AXEY berjalan sebagai pengelola profil kerja Android. Aplikasi dan data kerja dipisahkan dari profil pribadi."
+                : managedProfileContext
+                    ? "AXEY berjalan di Work Profile Android, tetapi bukan Profile Owner. Kemampuan administrasi AXEY terbatas."
+                    : "Buat profil kerja resmi Android untuk memisahkan aplikasi dan data kerja dari profil pribadi."
         );
 
-        if (!active) {
+        if (!active && managedProfileContext) {
+            addSection(page, "STATUS PENGELOLA: TERBATAS",
+                "Android mengidentifikasi sesi ini sebagai Work Profile, tetapi AXEY bukan Profile Owner. Gunakan pengaturan profil atau hubungi administrator yang mengelolanya. AXEY tidak akan mencoba membuat Work Profile bertingkat.");
+            addButton(page, "TAMBAH AKUN GOOGLE KERJA", false, this::addGoogleWorkAccount);
+            addButton(page, "PENGATURAN WORK PROFILE", true, this::openWorkProfileSettings);
+        } else if (!active) {
             boolean managedUsersSupported = getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
             boolean provisioningAllowed = canProvisionManagedProfile();
@@ -367,6 +381,7 @@ public class MainActivity extends Activity {
         boolean managedUsersSupported = getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
         boolean localProfileOwner = dpm != null && dpm.isProfileOwnerApp(getPackageName());
+        boolean managedProfileContext = isManagedProfileContext();
 
         TextView deviceCapability = label(
             "DUKUNGAN ANDROID: " + (managedUsersSupported
@@ -385,6 +400,13 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams ownerParams = new LinearLayout.LayoutParams(-1, -2);
         ownerParams.topMargin = dp(6);
         card.addView(ownerStatus, ownerParams);
+
+        TextView profileContextStatus = label(
+            "KONTEKS ANDROID: " + (managedProfileContext ? "WORK PROFILE" : "PROFIL PRIBADI / TIDAK TERKELOLA"),
+            12, textSecondary, true);
+        LinearLayout.LayoutParams profileContextParams = new LinearLayout.LayoutParams(-1, -2);
+        profileContextParams.topMargin = dp(6);
+        card.addView(profileContextStatus, profileContextParams);
 
         TextView detail = label(
             "Deteksi fitur managed users hanya menunjukkan dukungan sistem, bukan pendaftaran enterprise. Work Profile AXEY saat ini dikelola secara lokal dan belum terhubung ke organisasi atau Managed Google Play. Akun Google pribadi tidak otomatis menjadi akun kerja terkelola. Android Management API memerlukan enrollment token dan Android Device Policy; AxeyyAdminReceiver saat ini bukan DPC untuk jalur tersebut.",
@@ -452,6 +474,7 @@ public class MainActivity extends Activity {
         boolean policyManagerAvailable = dpm != null;
         boolean localProfileOwner = policyManagerAvailable
             && dpm.isProfileOwnerApp(getPackageName());
+        boolean managedProfileContext = isManagedProfileContext();
 
         String provisioningState;
         if (localProfileOwner) {
@@ -473,6 +496,7 @@ public class MainActivity extends Activity {
         String report =
             "AXEY Work - Diagnostik perangkat\n" +
             "Android: " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")\n" +
+            "Konteks Android: " + (managedProfileContext ? "WORK PROFILE" : "PROFIL PRIBADI / TIDAK TERKELOLA") + "\n" +
             "Versi AXEY: " + getAppVersionLabel() + "\n" +
             "Kompatibilitas minimum aplikasi: Android 9 (API 28)\n" +
             "Fitur managed users: " + (managedUsersSupported ? "TERDETEKSI" : "TIDAK TERDETEKSI") + "\n" +
