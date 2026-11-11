@@ -448,9 +448,30 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void addHiddenWorkAppsSection(LinearLayout parent) {
+    private Set<String> getActuallyHiddenWorkApps() {
         Set<String> hiddenApps = new HashSet<>(
             preferences.getStringSet(KEY_HIDDEN_APPS, Collections.emptySet()));
+        if (dpm == null || !dpm.isProfileOwnerApp(getPackageName())) return hiddenApps;
+
+        boolean changed = false;
+        for (String packageName : new HashSet<>(hiddenApps)) {
+            try {
+                if (!dpm.isApplicationHidden(admin, packageName)) {
+                    hiddenApps.remove(packageName);
+                    changed = true;
+                }
+            } catch (SecurityException e) {
+                // Keep the cached entry if Android temporarily rejects the policy query.
+            }
+        }
+        if (changed) {
+            preferences.edit().putStringSet(KEY_HIDDEN_APPS, hiddenApps).apply();
+        }
+        return hiddenApps;
+    }
+
+    private void addHiddenWorkAppsSection(LinearLayout parent) {
+        Set<String> hiddenApps = getActuallyHiddenWorkApps();
         if (hiddenApps.isEmpty()) return;
 
         List<String> sortedPackages = new java.util.ArrayList<>(hiddenApps);
