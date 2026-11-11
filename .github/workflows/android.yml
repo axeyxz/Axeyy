@@ -20,6 +20,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
+      - name: Verify managed-profile provisioning handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAIN_ACTIVITY="app/src/main/java/com/axeyy/app/MainActivity.java"
+          grep -Fq 'admin.flattenToString()' "$MAIN_ACTIVITY"
+          grep -Fq 'setup.resolveActivity(getPackageManager()) == null' "$MAIN_ACTIVITY"
+          grep -Fq 'startActivityForResult(setup, REQUEST_CREATE_WORK_PROFILE)' "$MAIN_ACTIVITY"
+          grep -Fq 'requestCode != REQUEST_CREATE_WORK_PROFILE' "$MAIN_ACTIVITY"
+          grep -Fq 'resultCode == RESULT_OK' "$MAIN_ACTIVITY"
       - name: Verify Work Profile manifest contract
         shell: bash
         run: |
