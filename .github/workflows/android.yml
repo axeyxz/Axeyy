@@ -63,7 +63,7 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           test -n "$AAPT"
           BADGING="$("$AAPT" dump badging "$APK")"
-          grep -q "package: name='com.axeyy.app' versionCode='7' versionName='1.3.3'" <<< "$BADGING"
+          grep -q "package: name='com.axeyy.app' versionCode='8' versionName='1.3.4'" <<< "$BADGING"
           grep -q "sdkVersion:'28'" <<< "$BADGING"
           grep -q "targetSdkVersion:'35'" <<< "$BADGING"
       - uses: actions/upload-artifact@v7
