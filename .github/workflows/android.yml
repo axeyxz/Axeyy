@@ -42,6 +42,16 @@ jobs:
           grep -Fq 'android:name=".AxeyyAdminReceiver"' "$MANIFEST"
           grep -Fq 'android:permission="android.permission.BIND_DEVICE_ADMIN"' "$MANIFEST"
           grep -Fq 'android.app.action.PROFILE_PROVISIONING_COMPLETE' "$MANIFEST"
+      - name: Verify Managed Google Play guidance boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAIN_ACTIVITY="app/src/main/java/com/axeyy/app/MainActivity.java"
+          grep -Fq 'PANDUAN DISTRIBUSI APLIKASI' "$MAIN_ACTIVITY"
+          grep -Fq 'https://developers.google.com/android/management/apps' "$MAIN_ACTIVITY"
+          grep -Fq 'Managed Google Play iframe in the EMM admin console' "$MAIN_ACTIVITY"
+          grep -Fq "AXEY's Android app is not the EMM backend." "$MAIN_ACTIVITY"
+          grep -Fq 'Do not place service-account keys, passwords, or enrollment tokens in the APK.' "$MAIN_ACTIVITY"
       - name: Verify Android compatibility and APK metadata
         shell: bash
         run: |
@@ -51,7 +61,7 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           test -n "$AAPT"
           BADGING="$("$AAPT" dump badging "$APK")"
-          grep -q "package: name='com.axeyy.app' versionCode='6' versionName='1.3.2'" <<< "$BADGING"
+          grep -q "package: name='com.axeyy.app' versionCode='7' versionName='1.3.3'" <<< "$BADGING"
           grep -q "sdkVersion:'28'" <<< "$BADGING"
           grep -q "targetSdkVersion:'35'" <<< "$BADGING"
       - uses: actions/upload-artifact@v7
