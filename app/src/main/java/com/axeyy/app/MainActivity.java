@@ -37,6 +37,7 @@ public class MainActivity extends Activity {
     private static final String PREFS = "axey_preferences";
     private static final String KEY_DARK = "dark_mode";
     private static final String KEY_HIDDEN_APPS = "hidden_work_profile_apps";
+    private static final int REQUEST_CREATE_WORK_PROFILE = 4101;
     private DevicePolicyManager dpm;
     private ComponentName admin;
     private SharedPreferences preferences;
@@ -56,6 +57,26 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         if (dpm != null) render();
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_CREATE_WORK_PROFILE) return;
+
+        if (resultCode == RESULT_OK) {
+            showMessage(
+                "Wizard Android mengembalikan RESULT_OK untuk tahap awal provisioning. " +
+                "Ini belum menjamin seluruh proses selesai. Setelah wizard menutup, buka ikon AXEY " +
+                "yang memiliki tanda koper di Work Profile. Di sana status harus menunjukkan " +
+                "PROFILE OWNER AKTIF. Jika belum, salin Diagnostik Perangkat untuk pemeriksaan."
+            );
+        } else {
+            showMessage(
+                "Pembuatan Work Profile dibatalkan atau prasyarat Android belum terpenuhi. " +
+                "Android tidak mengonfirmasi tahap awal provisioning. Periksa pesan pada wizard, " +
+                "lalu coba lagi hanya jika Android mengizinkannya."
+            );
+        }
     }
 
     private boolean isManagedProfileContext() {
@@ -697,9 +718,16 @@ public class MainActivity extends Activity {
             return;
         }
         Intent setup = new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
-        setup.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, admin);
+        setup.putExtra(
+            DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
+            admin.flattenToString()
+        );
+        if (setup.resolveActivity(getPackageManager()) == null) {
+            showMessage("Wizard resmi Android untuk membuat Work Profile tidak tersedia di perangkat ini.");
+            return;
+        }
         try {
-            startActivity(setup);
+            startActivityForResult(setup, REQUEST_CREATE_WORK_PROFILE);
         } catch (Exception e) {
             showMessage("Tidak bisa membuka proses Work Profile: " + e.getMessage());
         }
