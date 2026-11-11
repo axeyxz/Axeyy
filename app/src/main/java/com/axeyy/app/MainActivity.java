@@ -402,7 +402,7 @@ public class MainActivity extends Activity {
         card.addView(ownerStatus, ownerParams);
 
         TextView profileContextStatus = label(
-            "KONTEKS ANDROID: " + (managedProfileContext ? "WORK PROFILE" : "PROFIL PRIBADI / TIDAK TERKELOLA"),
+            "KONTEKS ANDROID: " + (managedProfileContext ? "WORK PROFILE" : "BUKAN WORK PROFILE"),
             12, textSecondary, true);
         LinearLayout.LayoutParams profileContextParams = new LinearLayout.LayoutParams(-1, -2);
         profileContextParams.topMargin = dp(6);
@@ -496,7 +496,7 @@ public class MainActivity extends Activity {
         String report =
             "AXEY Work - Diagnostik perangkat\n" +
             "Android: " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")\n" +
-            "Konteks Android: " + (managedProfileContext ? "WORK PROFILE" : "PROFIL PRIBADI / TIDAK TERKELOLA") + "\n" +
+            "Konteks Android: " + (managedProfileContext ? "WORK PROFILE" : "BUKAN WORK PROFILE") + "\n" +
             "Versi AXEY: " + getAppVersionLabel() + "\n" +
             "Kompatibilitas minimum aplikasi: Android 9 (API 28)\n" +
             "Fitur managed users: " + (managedUsersSupported ? "TERDETEKSI" : "TIDAK TERDETEKSI") + "\n" +
